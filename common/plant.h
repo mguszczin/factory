@@ -1,13 +1,12 @@
 #pragma once
 
 #include <time.h>
+#include <pthread.h>
+#include <err.h>
 
-////////////////////ERRORS///////////////////////////////
 #define PLANTOK 0
 #define ERROR -1
 
-////////////////////TYPE DEFINITIONS//////////////////////
-// Function type for task_t's task_function.
 typedef int (*task_function_t)(int);
 
 /*
@@ -53,10 +52,6 @@ typedef struct worker_t {
 
 ///////////////////////////FUNCTIONALITY///////////////////////
 
-// Initialize the plant.
-// @stations: array of size `n_stations` of station capacities.
-// @n_stations: number of stations in the plant.
-// @n_workers: number of workers in the plant.
 int init_plant(int* stations, int n_stations, int n_workers);
 
 // Clean up plant resources.
