@@ -9,7 +9,7 @@
 #include "task_list.h"
 #include "worker_list.h"
 
-typedef struct {
+typedef struct factory_struct {
     pthread_mutex_t main_lock;
     bool is_terminated;
 

@@ -7,7 +7,7 @@
 #include "../../common/plant.h"
 #include "task_info.h"
 
-struct factory_t;
+struct factory_struct;
 
 typedef struct {
     worker_t* original_def;
@@ -18,10 +18,10 @@ typedef struct {
     
     int assigned_index;
     task_info_t* assigned_task;
-    struct factory_t* my_factory;
+    struct factory_struct* my_factory;
 } worker_info_t;
 
-void worker_info_init(worker_info_t* info, worker_t* worker_def, struct factory_t* factory_t);
+void worker_info_init(worker_info_t* info, worker_t* worker_def, struct factory_struct* factory_t);
 void worker_info_destroy(worker_info_t* info);
 
 #endif

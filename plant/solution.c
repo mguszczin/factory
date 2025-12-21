@@ -6,6 +6,7 @@
 #include <time.h>
 
 static factory_t factory;
+static pthread_mutex_t new_opeartion = PTHREAD_MUTEX_INITIALIZER;
 static bool factory_active = false;
 
 void* worker_thread_func(void* arg) {
@@ -16,7 +17,7 @@ void* worker_thread_func(void* arg) {
     ASSERT_ZERO(pthread_cond_signal(&factory.manager_cond));
     ASSERT_ZERO(pthread_mutex_unlock(&factory.main_lock));
     /* Consider finishing at end or what if we are terminated */
-    while (true) {
+    while (time(NULL) < info->original_def->end) {
         ASSERT_ZERO(pthread_mutex_lock(&info->worker_mutex));
         while (info->assigned_task == NULL) {
             ASSERT_ZERO(pthread_cond_wait(&info->wakeup_cond, &info->worker_mutex));
@@ -26,8 +27,8 @@ void* worker_thread_func(void* arg) {
         int my_idx = info->assigned_index;
         ASSERT_ZERO(pthread_mutex_unlock(&info->worker_mutex));
 
-        /* Probably have to do something with res.*/
         int res = info->original_def->work(info->original_def, task->original_def, my_idx);
+        task->original_def->results[my_idx] = res;
 
         ASSERT_ZERO(pthread_mutex_lock(&factory.main_lock));
         
@@ -62,7 +63,6 @@ int get_station_index(task_info_t* task, time_t now)
 {
     int required = task->original_def->capacity;
     int available = 0;
-    int left = 0;
     int bad_workers = 0;
 
     /* Check for avaiable workers */

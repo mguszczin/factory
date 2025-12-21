@@ -1,10 +1,10 @@
 #include "../headers/worker_info.h"
 #include "../../common/err.h"
 
-void worker_info_init(worker_info_t* info, worker_t* worker_def, struct factory_t* factory_t)
+void worker_info_init(worker_info_t* info, worker_t* worker_def, struct factory_struct* f)
 {
     info->original_def = worker_def;
-    info->my_factory = factory_t;
+    info->my_factory = f;
     info->assigned_task = NULL;
 
     ASSERT_ZERO(pthread_mutex_init(&info->worker_mutex, NULL));
