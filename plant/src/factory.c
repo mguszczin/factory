@@ -11,7 +11,7 @@ int factory_init(factory_t* f, size_t n_stations, int* station_capacities, size_
     f->n_stations = n_stations;
     f->free_stations = n_stations;
     
-    atomic_init(&f->is_terminated, false);
+    f->is_terminated = false;
 
     f->station_capacity = malloc(n_stations * sizeof(int));
     if (!f->station_capacity) 

@@ -10,6 +10,7 @@ typedef struct {
     size_t count;
 
     size_t unfinished_tasks;
+    size_t waiting_ans;
 } task_container;
 
 int task_cont_init(task_container* cont);

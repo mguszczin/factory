@@ -11,7 +11,7 @@
 
 typedef struct {
     pthread_mutex_t main_lock;
-    _Atomic bool is_terminated;
+    bool is_terminated;
 
     int* station_capacity;
     int* station_usage;
@@ -19,6 +19,7 @@ typedef struct {
     size_t n_stations;
 
     task_container tasks;
+
     worker_container workers;
 
     pthread_cond_t manager_cond;

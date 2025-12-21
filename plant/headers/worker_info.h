@@ -16,6 +16,7 @@ typedef struct {
     pthread_mutex_t worker_mutex;
     pthread_cond_t wakeup_cond;
     
+    int assigned_index;
     task_info_t* assigned_task;
     struct factory_t* my_factory;
 } worker_info_t;
