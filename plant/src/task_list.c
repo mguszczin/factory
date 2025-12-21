@@ -20,9 +20,13 @@ int task_cont_push_back(task_container* cont, task_info_t* task)
     int id = task->original_def->id;
     for (size_t i = 0; i < cont->count; i++) {
         int cur_id = cont->items[i]->original_def->id;
-        if (id == cur_id) return 0;
+        if (id == cur_id) {
+            task_info_destroy(task);
+            free(task);
+            return 0;
+        }
     }
-    
+
     if (cont->count >= cont->capacity) {
         size_t new_capacity = cont->capacity * 2;
         task_info_t** new_items = realloc(cont->items, new_capacity * sizeof(task_info_t*));

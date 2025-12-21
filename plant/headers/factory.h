@@ -22,6 +22,7 @@ typedef struct {
     worker_container workers;
 
     pthread_cond_t manager_cond;
+    pthread_t manager_thread;
 } factory_t;
 
 int factory_init(factory_t* f, size_t n_stations, int* station_capacities, size_t n_workers);

@@ -17,7 +17,11 @@ void worker_cont_push_back(worker_container* list, worker_info_t* worker)
     int id = worker->original_def->id;
     for(size_t i = 0; i < list->count; i++) {
         int curid = list->items[i]->original_def->id;
-        if (id == curid) return;
+        if (id == curid) {
+            worker_info_destroy(worker);
+            free(worker);
+            return;
+        }
     }
 
     list->items[list->count] = worker;
