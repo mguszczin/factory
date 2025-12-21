@@ -1,40 +1,67 @@
 #include "../headers/task_list.h"
 #include <stdlib.h>
+#include "../headers/task_list.h"
 
-void taks_cont_init(task_container* list) {
-    list->capacity = 4;
-    list->count = 0;
-    list->items = malloc(list->capacity * sizeof(task_info_t*));
+int task_cont_init(task_container* cont)
+{
+    cont->capacity = 4;
+    cont->count = 0;
+    cont->unfinished_tasks = 0;
+
+    cont->items = malloc(cont->capacity * sizeof(task_info_t*));
+
+    if (cont->items == NULL) 
+        return -1;
+    return 0;
 }
 
-int task_cont_push_back(task_container* list, task_info_t* task) {
-    if (list->count >= list->capacity) {
-        size_t new_capacity = list->capacity * 2;
-        task_info_t** new_items = realloc(list->items, new_capacity * sizeof(task_info_t*));
+int task_cont_push_back(task_container* cont, task_info_t* task)
+{
+    int id = task->original_def->id;
+    for (size_t i = 0; i < cont->count; i++) {
+        int cur_id = cont->items[i]->original_def->id;
+        if (id == cur_id) return 0;
+    }
+    
+    if (cont->count >= cont->capacity) {
+        size_t new_capacity = cont->capacity * 2;
+        task_info_t** new_items = realloc(cont->items, new_capacity * sizeof(task_info_t*));
         
         if (new_items == NULL) {
             return -1;
         }
         
-        list->items = new_items;
-        list->capacity = new_capacity;
+        cont->items = new_items;
+        cont->capacity = new_capacity;
     }
 
-    list->items[list->count] = task;
-    list->count++;
+    cont->items[cont->count] = task;
+    cont->count++;
+    cont->unfinished_tasks++;
     return 0;
 }
 
-task_info_t* task_cont_get(task_container* list, size_t index) {
-    if (index >= list->count) return NULL;
-    return list->items[index];
+task_info_t* task_cont_get(task_container* cont, size_t index)
+{
+    if (index >= cont->count) return NULL;
+    return cont->items[index];
 }
 
-void task_cont_free(task_container* list) {
-    if (list->items != NULL) {
-        free(list->items);
+size_t task_cont_size(task_container* cont)
+{
+    return cont->count;
+}
+
+void task_cont_free(task_container* cont)
+{
+
+    for (size_t i = 0; i < cont->count; i++) {
+        task_info_destroy(cont->items[i]); 
+        free(cont->items[i]);
     }
-    list->items = NULL;
-    list->count = 0;
-    list->capacity = 0;
+
+    free(cont->items);
+    cont->items = NULL;
+    cont->count = 0;
+    cont->capacity = 0;
 }

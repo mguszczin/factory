@@ -12,7 +12,7 @@ typedef struct {
     size_t unfinished_tasks;
 } task_container;
 
-void taks_cont_init(task_container* cont);
+int task_cont_init(task_container* cont);
 int task_cont_push_back(task_container* cont, task_info_t* task);
 task_info_t* task_cont_get(task_container* cont, size_t index);
 size_t task_cont_size(task_container* cont);

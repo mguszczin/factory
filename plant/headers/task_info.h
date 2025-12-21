@@ -6,7 +6,7 @@
 #include "../../common/plant.h"
 
 typedef struct {
-    task_info_t* original_def;
+    task_t* original_def;
     int workers_assigned;
     int workers_finished;
     int assigned_position;
@@ -16,7 +16,7 @@ typedef struct {
     bool is_completed;
 } task_info_t;
 
-void task_info_init(task_info_t* info, task_info_t* task_def);
+void task_info_init(task_info_t* info, task_t* task_def);
 void task_info_destroy(task_info_t* info);
 
 #endif

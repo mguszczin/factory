@@ -2,32 +2,48 @@
 #include "../../common/err.h"
 #include <string.h>
 
-void factory_init(struct factory_t* f, size_t n_stations, size_t n_workers, const size_t* station_capacities) {
+#include "../headers/factory.h"
+#include "../../common/err.h"
+#include <string.h>
+
+int factory_init(factory_t* f, size_t n_stations, int* station_capacities, size_t n_workers)
+{
+    f->n_stations = n_stations;
+    f->free_stations = n_stations;
+    
+    atomic_init(&f->is_terminated, false);
+
+    f->station_capacity = malloc(n_stations * sizeof(int));
+    if (!f->station_capacity) 
+        return -1;
+    
+    memcpy(f->station_capacity, station_capacities, n_stations * sizeof(int));
+
+    f->station_usage = calloc(n_stations, sizeof(int));
+    if (!f->station_usage) {
+        free(f->station_capacity);
+        return -1;   
+    }
+
     ASSERT_ZERO(pthread_mutex_init(&f->main_lock, NULL));
     ASSERT_ZERO(pthread_cond_init(&f->manager_cond, NULL));
 
-    f->is_terminated = false;
-    f->n_stations = n_stations;
-    f->free_stations = n_stations;
+    ASSERT_ZERO(task_cont_init(&f->tasks));
+    ASSERT_ZERO(worker_cont_init(&f->workers, n_workers));
 
-    const size_t* station_capacities = 
-
-    
-
-    ASSERT_SYS_OK(taks_cont_init(&f->tasks));
-    ASSERT_SYS_OK(worker_cont_init(&f->workers));
+    return 0;
 }
 
-void factory_destroy(struct factory_t* f) {
-    task_cont_free(&f->tasks);
-    worker_cont_free(&f->workers);
-
+void factory_destroy(factory_t* f)
+{
+    free(f->station_capacity);
     free(f->station_usage);
-    f->station_usage = NULL;
-
-    free((void*)f->station_capacity);
     f->station_capacity = NULL;
+    f->station_usage = NULL;
 
     ASSERT_ZERO(pthread_mutex_destroy(&f->main_lock));
     ASSERT_ZERO(pthread_cond_destroy(&f->manager_cond));
+
+    task_cont_free(&f->tasks);
+    worker_cont_free(&f->workers);
 }

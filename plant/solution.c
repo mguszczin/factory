@@ -16,21 +16,21 @@ int destroy_plant()
     return ERROR;
 }
 
-int add_worker(worker_info_t* w)
+int add_worker(worker_t* w)
 {
     printf("Not implemented yet!");
 
     return ERROR;
 }
 
-int add_task(task_info_t* t)
+int add_task(task_t* t)
 {
     printf("Not implemented yet!");
 
     return ERROR;
 }
 
-int collect_task(task_info_t* t)
+int collect_task(task_t* t)
 {
     printf("Not implemented yet!");
 

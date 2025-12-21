@@ -1,12 +1,13 @@
 #pragma once
 
 #include <time.h>
-#include <pthread.h>
-#include <err.h>
 
+////////////////////ERRORS///////////////////////////////
 #define PLANTOK 0
 #define ERROR -1
 
+////////////////////TYPE DEFINITIONS//////////////////////
+// Function type for task_t's task_function.
 typedef int (*task_function_t)(int);
 
 /*
@@ -18,24 +19,24 @@ typedef int (*task_function_t)(int);
  *@data: array of size `capacity` with arguments to be used by workers when calling `task_function`.
  *@results: array of size `capacity` to store results computed by workers.
  */
-typedef struct task_info_t {
+typedef struct task_t {
     int id;
     time_t start;
     task_function_t task_function;
     int capacity;
     int* data;
     int* results;
-} task_info_t;
+} task_t;
 
 // Forward declaration.
-struct worker_info_t;
+struct worker_t;
 
 /* Function type for worker's work function.
- * @w: pointer to the worker_info_t performing the task.
+ * @w: pointer to the worker_t performing the task.
  * @t: pointer to the task being performed.
  * @i: index of the worker in the task's capacity (0 .. capacity-1).
  */
-typedef int (*worker_function_t)(struct worker_info_t* w, task_info_t* t, int i);
+typedef int (*worker_function_t)(struct worker_t* w, task_t* t, int i);
 
 /* A worker in the plant.
  * @id: a unique worker id.
@@ -43,25 +44,29 @@ typedef int (*worker_function_t)(struct worker_info_t* w, task_info_t* t, int i)
  * @end: the worker's end time.
  * @work: the performing function of the worker.
  */
-typedef struct worker_info_t {
+typedef struct worker_t {
     int id;
     time_t start;
     time_t end;
     worker_function_t work;
-} worker_info_t;
+} worker_t;
 
 ///////////////////////////FUNCTIONALITY///////////////////////
 
+// Initialize the plant.
+// @stations: array of size `n_stations` of station capacities.
+// @n_stations: number of stations in the plant.
+// @n_workers: number of workers in the plant.
 int init_plant(int* stations, int n_stations, int n_workers);
 
 // Clean up plant resources.
 int destroy_plant();
 
 // Register a new worker.
-int add_worker(worker_info_t* w);
+int add_worker(worker_t* w);
 
 // Register a new task.
-int add_task(task_info_t* t);
+int add_task(task_t* t);
 
 // Collect the results of the task (blocking).
-int collect_task(task_info_t* t);
+int collect_task(task_t* t);

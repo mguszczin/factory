@@ -24,7 +24,7 @@ typedef struct {
     pthread_cond_t manager_cond;
 } factory_t;
 
-void factory_init(struct factory_t* f, size_t n_stations, const size_t* station_capacities);
-void factory_destroy(struct factory_t* f);
+int factory_init(factory_t* f, size_t n_stations, int* station_capacities, size_t n_workers);
+void factory_destroy(factory_t* f);
 
 #endif
