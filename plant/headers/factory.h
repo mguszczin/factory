@@ -10,13 +10,14 @@
 #include "worker_list.h"
 
 typedef struct factory_struct {
-    pthread_mutex_t main_lock;
+    /* Tere is a case where factory might be 
+       terminated but still active */
+    bool is_active;
     bool is_terminated;
 
     int* station_capacity;
     int* station_usage;
-    size_t free_stations;
-    size_t n_stations;
+    int n_stations;
 
     task_container tasks;
 
@@ -26,7 +27,8 @@ typedef struct factory_struct {
     pthread_t manager_thread;
 } factory_t;
 
-int factory_init(factory_t* f, size_t n_stations, int* station_capacities, size_t n_workers);
+/* No condition initialized here. we will do this inside mutex */
+int factory_init(factory_t* f, int n_stations, int* station_capacities, int n_workers);
 void factory_destroy(factory_t* f);
 
 #endif

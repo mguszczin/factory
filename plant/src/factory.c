@@ -1,23 +1,20 @@
 #include "../headers/factory.h"
 #include "../../common/err.h"
+
+#include <stdlib.h>
 #include <string.h>
 
-#include "../headers/factory.h"
-#include "../../common/err.h"
-#include <string.h>
-
-int factory_init(factory_t* f, size_t n_stations, int* station_capacities, size_t n_workers)
+int factory_init(factory_t* f, int n_stations, int* station_capacities, int n_workers)
 {
     f->n_stations = n_stations;
-    f->free_stations = n_stations;
-    
+    f->is_active = true;
     f->is_terminated = false;
 
-    f->station_capacity = malloc(n_stations * sizeof(int));
-    if (!f->station_capacity) 
+    f->station_capacity = malloc(sizeof(int) * n_stations);
+    if (!f->station_capacity) {
         return -1;
-    
-    memcpy(f->station_capacity, station_capacities, n_stations * sizeof(int));
+    }
+    memcpy(f->station_capacity, station_capacities, sizeof(int) * n_stations);
 
     f->station_usage = calloc(n_stations, sizeof(int));
     if (!f->station_usage) {
@@ -25,25 +22,33 @@ int factory_init(factory_t* f, size_t n_stations, int* station_capacities, size_
         return -1;   
     }
 
-    ASSERT_ZERO(pthread_mutex_init(&f->main_lock, NULL));
-    ASSERT_ZERO(pthread_cond_init(&f->manager_cond, NULL));
+    if (task_cont_init(&f->tasks) != 0) {
+        free(f->station_usage);
+        free(f->station_capacity);
+        return -1;
+    }
 
-    ASSERT_ZERO(task_cont_init(&f->tasks));
-    ASSERT_ZERO(worker_cont_init(&f->workers, n_workers));
+    if (worker_cont_init(&f->workers, n_workers) != 0) {
+        free(f->station_usage);
+        free(f->station_capacity);
+        task_cont_destroy(&f->tasks);
+        return -1;
+    }
 
     return 0;
 }
 
+/* Can't destory factory if it wasn't initialized before with condition */
 void factory_destroy(factory_t* f)
 {
-    free(f->station_capacity);
     free(f->station_usage);
+    free(f->station_capacity);
     f->station_capacity = NULL;
     f->station_usage = NULL;
+    f->n_stations = 0;
+    f->is_active = false;
+    f->is_terminated = false;
 
-    ASSERT_ZERO(pthread_mutex_destroy(&f->main_lock));
-    ASSERT_ZERO(pthread_cond_destroy(&f->manager_cond));
-
-    task_cont_free(&f->tasks);
+    task_cont_destroy(&f->tasks);
     worker_cont_free(&f->workers);
 }

@@ -50,4 +50,5 @@ void worker_cont_free(worker_container* list)
     list->items = NULL;
     list->count = 0;
     list->capacity = 0;
+    list->finished_workers = 0;
 }

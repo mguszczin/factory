@@ -6,8 +6,7 @@
 #include <time.h>
 
 static factory_t factory;
-static pthread_mutex_t new_opeartion = PTHREAD_MUTEX_INITIALIZER;
-static bool factory_active = false;
+static pthread_mutex_t main_lock = PTHREAD_MUTEX_INITIALIZER;
 
 void* worker_thread_func(void* arg) {
     worker_info_t* info = (worker_info_t*)arg;
@@ -178,42 +177,51 @@ void* manager_thread_func(void* arg)
     return NULL;
 }
 
+/* Function initializes factory if it hasn't been initialized before.
+   Does memory allocation before entering mutex for efficiency */
 int init_plant(int* stations, int n_stations, int n_workers)
 {
-    if (!stations || factory_active) {
+    factory_t f;
+    if (factory_init(&f, n_stations, stations, n_workers) != 0)
+        return -1;
+    
+    /* Now we enter mutex end check if we can still initialize factory */
+    ASSERT_ZERO(pthread_mutex_lock(&main_lock));
+
+    if (factory.is_active == true) {
+        ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
+        factory_destroy(&f);
         return -1;
     }
 
-    if (factory_init(&factory, n_stations, stations, n_workers) != 0) {
-        return -1;
-    }
-    if (pthread_create(&factory.manager_thread, NULL, manager_thread_func, &factory) != 0) {
-        factory_destroy(&factory);
-        return -1;
-    }
-    factory_active = true;
+    factory = f;
+    /* We need to remember to destroy the condition when leaving mutex. */
+    ASSERT_ZERO(pthread_cond_init(&factory.manager_cond, NULL));
+
+    ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
     return 0;
 }
 
+/* We destroy the whole plantation */
 int destroy_plant()
 {
-    if (!factory_active) {
+    ASSERT_ZERO(pthread_mutex_lock(&main_lock));
+
+    if (factory.is_active == false || factory.is_terminated == true) {
+        ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
         return -1;
     }
 
-    ASSERT_ZERO(pthread_mutex_lock(&factory.main_lock));
-
     factory.is_terminated = true;
 
-    for (size_t i = 0; i < factory.workers.count; i++) {
+    int size = worker_cont_size(&factory.workers);
+    for (size_t i = 0; i < size; i++) {
         worker_info_t* w = factory.workers.items[i];
-        ASSERT_ZERO(pthread_mutex_lock(&w->worker_mutex));
         ASSERT_ZERO(pthread_cond_signal(&w->wakeup_cond));
-        ASSERT_ZERO(pthread_mutex_unlock(&w->worker_mutex));
     }
-    ASSERT_ZERO(pthread_cond_broadcast(&factory.manager_cond));
+    ASSERT_ZERO(pthread_cond_signal(&factory.manager_cond));
 
-    ASSERT_ZERO(pthread_mutex_unlock(&factory.main_lock));
+    ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
 
     for (size_t i = 0; i < factory.workers.count; i++) {
         worker_info_t* w = factory.workers.items[i];
@@ -222,26 +230,33 @@ int destroy_plant()
 
     pthread_join(factory.manager_thread, NULL);
 
-    factory_active = false;
+
+    ASSERT_ZERO(pthread_mutex_lock(&main_lock));
     factory_destroy(&factory);
+    ASSERT_ZERO(pthread_cond_destroy(&factory.manager_cond));
+    ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
 
     return 0;
 }
 
 int add_worker(worker_t* w)
 {
-    if (!w || !factory_active) {
+    if (!w) {
         return -1;
     }
 
     worker_info_t* wrapper = malloc(sizeof(worker_info_t));
     if (!wrapper) return -1;
-    worker_info_init(wrapper, w, &factory);
 
-    ASSERT_ZERO(pthread_mutex_lock(&factory.main_lock));
-    // factory shut down
-    if (factory.is_terminated) {
-        ASSERT_ZERO(pthread_mutex_unlock(&factory.main_lock));
+    if (worker_info_init(wrapper, w, &factory) != 0) {
+        free(wrapper);
+        return -1;
+    }
+
+    ASSERT_ZERO(pthread_mutex_lock(&main_lock));
+
+    if (factory.is_terminated || !factory.is_active) {
+        ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
         worker_info_destroy(wrapper);
         free(wrapper);
         return -1;
@@ -250,26 +265,29 @@ int add_worker(worker_t* w)
     worker_cont_push_back(&factory.workers, wrapper);
     ASSERT_ZERO(pthread_create(&wrapper->thread_id, NULL, worker_thread_func, wrapper));
 
-    ASSERT_ZERO(pthread_mutex_unlock(&factory.main_lock));
+    ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
 
     return 0;
 }
 
 int add_task(task_t* t)
 {
-    if (!factory_active || !t) {
+    if (!t) {
         return -1;
     }
 
     task_info_t* wrapper = malloc(sizeof(task_info_t));
     if(!wrapper) return -1;
 
-    task_wrapper_init(wrapper, t);
+    if (task_wrapper_init(wrapper, t) != 0) {
+        free(wrapper);
+        return -1;
+    }
 
-    ASSERT_ZERO(pthread_mutex_lock(&factory.main_lock));
+    ASSERT_ZERO(pthread_mutex_lock(&main_lock));
 
-    if (factory.is_terminated) {
-        ASSERT_ZERO(pthread_mutex_unlock(&factory.main_lock));
+    if (factory.is_terminated || !factory.is_active) {
+        ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
         task_wrapper_destroy(wrapper);
         free(wrapper);
         return -1;
@@ -278,53 +296,53 @@ int add_task(task_t* t)
     task_cont_push_back(&factory.tasks, wrapper);
     ASSERT_ZERO(pthread_cond_signal(&factory.manager_cond));
 
-    ASSERT_ZERO(pthread_mutex_unlock(&factory.main_lock));
+    ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
 
     return 0;
 }
 
-/* factory activate and so on should be inside mutex i belive */
-int collect_task(task_t* t)
+bool can_be_collected(task_t *t, task_info_t** wrapper)
 {
-    if (!factory_active || !t) {
-        return -1;
-    }
-
-    task_info_t* wrapper = NULL;
-
-    ASSERT_ZERO(pthread_mutex_lock(&factory.main_lock));
-
-    if (factory.is_terminated) {
-        ASSERT_ZERO(pthread_mutex_unlock(&factory.main_lock));
-        return -1;
-    }
-
     for (size_t i = 0; i < factory.tasks.count; i++) {
-        if (factory.tasks.items[i]->original_def->id == t->id) {
-            wrapper = factory.tasks.items[i];
+        task_info_t* cur_task = factory.tasks.items[i];
+
+        if (cur_task->original_def->id == t->id) {
+            *wrapper = cur_task;
             break;
         }
     }
 
-    if (wrapper == NULL) {
-        ASSERT_ZERO(pthread_mutex_unlock(&factory.main_lock));
+    if (*wrapper == NULL) {
+        return false;
+    }
+    return true;
+}
+
+int collect_task(task_t* t)
+{
+    if (!t) {
         return -1;
     }
+    task_info_t* wrapper = NULL;
 
-    factory.tasks.waiting_ans++;
-    
-    ASSERT_ZERO(pthread_mutex_unlock(&factory.main_lock));
+    ASSERT_ZERO(pthread_mutex_lock(&main_lock));
 
-    ASSERT_ZERO(pthread_mutex_lock(&wrapper->task_mutex));
-    while (!wrapper->is_completed) {
-        ASSERT_ZERO(pthread_cond_wait(&wrapper->task_complete_cond, &wrapper->task_mutex));
+    if (factory.is_terminated || !factory.is_active || 
+                            !can_be_collected(t, &wrapper)) {
+        ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
+        return -1;
     }
-    ASSERT_ZERO(pthread_mutex_unlock(&wrapper->task_mutex));
-
-    ASSERT_ZERO(pthread_mutex_lock(&factory.main_lock));
+    
+    factory.tasks.waiting_ans++;
+    while (!wrapper->is_completed) {
+        ASSERT_ZERO(pthread_cond_wait(&wrapper->task_complete_cond, &main_lock));
+    }
     factory.tasks.waiting_ans--;
-    ASSERT_ZERO(pthread_mutex_unlock(&factory.main_lock));
+    /* We need to read here because destroy may be called. */
+    bool bad = wrapper->failed;
 
-    if (wrapper->failed) return -1;
+    ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
+
+    if (bad) return -1;
     return 0;
 }

@@ -6,17 +6,16 @@
 
 typedef struct {
     task_info_t** items;
-    size_t capacity;
-    size_t count;
+    int capacity;
+    int count;
 
-    size_t unfinished_tasks;
-    size_t waiting_ans;
+    int waiting_ans;
 } task_container;
 
 int task_cont_init(task_container* cont);
 int task_cont_push_back(task_container* cont, task_info_t* task);
 task_info_t* task_cont_get(task_container* cont, size_t index);
 size_t task_cont_size(task_container* cont);
-void task_cont_free(task_container* cont);
+void task_cont_destroy(task_container* cont);
 
 #endif

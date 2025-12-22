@@ -13,7 +13,6 @@ typedef struct {
     worker_t* original_def;
     pthread_t thread_id;
     
-    pthread_mutex_t worker_mutex;
     pthread_cond_t wakeup_cond;
     
     int assigned_index;
@@ -21,7 +20,7 @@ typedef struct {
     struct factory_struct* my_factory;
 } worker_info_t;
 
-void worker_info_init(worker_info_t* info, worker_t* worker_def, struct factory_struct* factory_t);
+int worker_info_init(worker_info_t* info, worker_t* worker_def, const struct factory_struct* factory_t);
 void worker_info_destroy(worker_info_t* info);
 
 #endif
