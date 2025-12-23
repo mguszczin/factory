@@ -14,6 +14,7 @@ static int manager_signal = 0;
 static int other_signal = 0;
 static bool manager_should_sleep = false;
 
+
 void notify_manager()
 {
     manager_should_sleep = false;
@@ -122,12 +123,13 @@ static bool free_workers_present(task_info_t* task, const time_t now)
     int available = 0;
     int bad_workers = 0;
 
+    time_t best = now;
+        if (best < task->original_def->start)
+            best = task->original_def->start;
+
     /* Check for avaiable workers */
     for (size_t i = 0; i < factory.workers.count; i++) {
         worker_info_t* w = factory.workers.items[i];
-        time_t best = now;
-        if (best < task->original_def->start)
-            best = task->original_def->start;
         
         if (w->assigned_task == NULL && 
             best >= w->original_def->start && 
@@ -207,7 +209,9 @@ static void* manager_thread_func(void* arg)
             }
 
             int best_ind;
-            if (free_workers_present(task, now) && (best_ind = get_station_index(task)) != -1 && task->original_def->start <= now) {
+            if (free_workers_present(task, now) && 
+               (best_ind = get_station_index(task)) != -1 && 
+                task->original_def->start <= now) {
                 assign_workers(best_ind, task, now);
             }
         }
@@ -380,12 +384,19 @@ int add_task(task_t* t)
 
     ASSERT_ZERO(pthread_mutex_lock(&main_lock));
 
+    bool is_not_ready = factory.is_terminated || !factory.is_active;
+    if (is_not_ready) {
+        ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
+        task_info_destroy(wrapper);
+        free(wrapper);
+        return ERROR;
+    }
+
     int prev_size = factory.tasks.count;
     int ret = task_cont_push_back(&factory.tasks, wrapper);
     int cur_size = factory.tasks.count;
 
-    bool is_not_ready = factory.is_terminated || !factory.is_active;
-    if (is_not_ready || ret != 0) {
+    if (ret != 0) {
         ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
         task_info_destroy(wrapper);
         free(wrapper);
@@ -394,7 +405,11 @@ int add_task(task_t* t)
 
     /* If we really added a new element tell manager about the update. */
     if (prev_size != cur_size) {
-        notify_manager();
+        /* This way we check if the task can fail*/
+        get_station_index(wrapper);
+        free_workers_present(wrapper, wrapper->original_def->start);
+        /* If we didn't fail we can notify manager about new task*/
+        if (!wrapper->failed)notify_manager();
     }
 
     ASSERT_ZERO(pthread_mutex_unlock(&main_lock));

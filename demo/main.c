@@ -383,6 +383,16 @@ int test_massive_parallelism() {
     }
 }
 
+static int n_workers = 20;
+static int n_stations = 10;
+int stations[10] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+typedef struct {
+    pthread_barrier_t* barrier;
+    unsigned int seed;
+    int id;
+} thread_args_t;
+
 typedef struct {
     int id;
     time_t start_time;
@@ -395,6 +405,7 @@ typedef struct {
     worker_t* w;
     pthread_barrier_t* barier;
     int* status_ptr;
+    unsigned int seed;
 } worker_and_task_t;
 
 void* client_thread_func(void* arg) {
@@ -419,7 +430,6 @@ int test_concurrent_clients() {
     printf("Test 8: Concurrent Clients ");
     fflush(stdout);
 
-    int stations[10] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}; 
     pthread_t clients[10];
     worker_and_task_t args[10];
     int statuses[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -478,6 +488,96 @@ int test_concurrent_clients() {
         TEST_FAIL("Too slow! Parallelism broken.");
     }
 }
+/// a czekamy na task kotry sie nigdy nie wydarzy 
+void* stress_thread_func(void* arg) {
+    worker_and_task_t* info = (worker_and_task_t*)arg;
+    
+    setup_task_memory(info->t, 1);
+    
+    pthread_barrier_wait(info->barier);
+
+    int op = rand_r(&info->seed) % 5;
+    switch(op) {
+        case 0: 
+        case 1: { 
+            if (add_task(info->t) == PLANTOK) {
+                collect_task(info->t);
+            }
+            break;
+        }
+        case 2: {
+            init_plant(stations, n_stations, n_workers);
+            break;
+        }
+        case 3: {
+            destroy_plant();
+            break;
+        }
+        case 4: { 
+            add_worker(info->w);
+            break;
+        }
+    }
+
+    *(info->status_ptr) = 1; 
+    return NULL;
+}
+
+int test_stress_mixed_ops(unsigned int main_seed) {
+    printf("Test 10: Stress Mixed Ops (20 threads, seed: %u) ", main_seed);
+    fflush(stdout);
+
+    const int N = 20;
+    pthread_t threads[N];
+    worker_and_task_t args[N];
+    int statuses[N];
+    task_t tasks[N];
+    worker_t workers[N];
+
+    time_t now = time(NULL); 
+    
+    pthread_barrier_t barrier;
+    pthread_barrier_init(&barrier, NULL, N + 1);
+
+    destroy_plant();
+
+    for(int i = 0; i < N; i++) {
+        tasks[i] = (task_t){.id = i, .start = now, .capacity = 1};
+        workers[i] = (worker_t){.id = i + 100, .start = now, .end = now + 10, .work = work_sleep_1s};
+        statuses[i] = 0;
+
+        args[i] = (worker_and_task_t){
+            .t = &tasks[i],
+            .w = &workers[i],
+            .barier = &barrier,
+            .status_ptr = &statuses[i],
+            // Tu jest klucz: seed zależy TYLKO od argumentu funkcji i indeksu pętli
+            .seed = main_seed + i 
+        };
+        
+        if (pthread_create(&threads[i], NULL, stress_thread_func, &args[i]) != 0) {
+            TEST_FAIL("Failed to create thread");
+        }
+    }
+
+    pthread_barrier_wait(&barrier);
+    
+    for(int i = 0; i < N; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
+    pthread_barrier_destroy(&barrier);
+    destroy_plant();
+
+    for(int i = 0; i < N; i++) {
+        cleanup_task_memory(&tasks[i]);
+    }
+
+    TEST_PASS();
+    return 0;
+}
+
+
 
 /* -------------------------------------------------------------------------- */
 /*                                    Main                                    */
@@ -496,10 +596,16 @@ int main() {
     if (test_destroy_waits_multiple_future() != 0) fail_count++;
     if (test_worker_tight_schedule() != 0) fail_count++;
     if (test_mixed_destroy() != 0) fail_count++;
+    if (test_massive_parallelism() != 0) fail_count++;
     */
-    //if (test_massive_parallelism() != 0) fail_count++;
-    if (test_concurrent_clients() != 0) fail_count++;
-
+    //if (test_concurrent_clients() != 0) fail_count++;
+    printf("RANDOMIZED TESTS, IF THERE WAS ERROR ON TEST I, \n YOU CAN JUST CALL `test_stress_mixed_ops(i)` AND ANALYZE WITH VALGRIND\n ");
+    printf("FOR EXAMPLE:  valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --trace-children=yes --fair-sched=yes --log-file=valgrind-out.txt ./demo");
+    for (int i = 0; i < 100; i++) {
+        if (test_stress_mixed_ops(i) != 0) fail_count++;
+    }
+    
+   test_stress_mixed_ops(6);
     printf("\n==========================================\n");
     if (fail_count == 0) {
         printf(GREEN "ALL ADVANCED TESTS PASSED.\n" RESET);
