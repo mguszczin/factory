@@ -10,25 +10,36 @@ plant/CMakeFiles/plant.dir/solution.c.o: /home/marrcinno/mim/pw/fabryka/ab12345/
   /home/marrcinno/mim/pw/fabryka/ab12345/plant/headers/worker_info.h \
   /home/marrcinno/mim/pw/fabryka/ab12345/plant/headers/worker_list.h \
   /usr/include/alloca.h \
+  /usr/include/asm-generic/errno-base.h \
+  /usr/include/asm-generic/errno.h \
   /usr/include/assert.h \
   /usr/include/endian.h \
+  /usr/include/errno.h \
   /usr/include/features-time64.h \
   /usr/include/features.h \
+  /usr/include/limits.h \
+  /usr/include/linux/errno.h \
+  /usr/include/linux/limits.h \
   /usr/include/pthread.h \
   /usr/include/sched.h \
   /usr/include/stdc-predef.h \
   /usr/include/stdio.h \
   /usr/include/stdlib.h \
   /usr/include/time.h \
+  /usr/include/x86_64-linux-gnu/asm/errno.h \
   /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \
   /usr/include/x86_64-linux-gnu/bits/byteswap.h \
   /usr/include/x86_64-linux-gnu/bits/cpu-set.h \
   /usr/include/x86_64-linux-gnu/bits/endian.h \
   /usr/include/x86_64-linux-gnu/bits/endianness.h \
+  /usr/include/x86_64-linux-gnu/bits/errno.h \
   /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
   /usr/include/x86_64-linux-gnu/bits/floatn.h \
   /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
+  /usr/include/x86_64-linux-gnu/bits/local_lim.h \
   /usr/include/x86_64-linux-gnu/bits/long-double.h \
+  /usr/include/x86_64-linux-gnu/bits/posix1_lim.h \
+  /usr/include/x86_64-linux-gnu/bits/posix2_lim.h \
   /usr/include/x86_64-linux-gnu/bits/pthread_stack_min-dynamic.h \
   /usr/include/x86_64-linux-gnu/bits/pthread_stack_min.h \
   /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h \
@@ -77,11 +88,13 @@ plant/CMakeFiles/plant.dir/solution.c.o: /home/marrcinno/mim/pw/fabryka/ab12345/
   /usr/include/x86_64-linux-gnu/sys/cdefs.h \
   /usr/include/x86_64-linux-gnu/sys/select.h \
   /usr/include/x86_64-linux-gnu/sys/types.h \
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdatomic.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
-  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdnoreturn.h
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdnoreturn.h \
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h
 
 plant/CMakeFiles/plant.dir/src/factory.c.o: /home/marrcinno/mim/pw/fabryka/ab12345/plant/src/factory.c \
   /home/marrcinno/mim/pw/fabryka/ab12345/common/err.h \
@@ -216,6 +229,7 @@ plant/CMakeFiles/plant.dir/src/task_list.c.o: /home/marrcinno/mim/pw/fabryka/ab1
   /usr/include/pthread.h \
   /usr/include/sched.h \
   /usr/include/stdc-predef.h \
+  /usr/include/stdio.h \
   /usr/include/stdlib.h \
   /usr/include/time.h \
   /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \
@@ -235,6 +249,7 @@ plant/CMakeFiles/plant.dir/src/task_list.c.o: /home/marrcinno/mim/pw/fabryka/ab1
   /usr/include/x86_64-linux-gnu/bits/select.h \
   /usr/include/x86_64-linux-gnu/bits/setjmp.h \
   /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
+  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
   /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
   /usr/include/x86_64-linux-gnu/bits/struct_mutex.h \
   /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h \
@@ -243,12 +258,19 @@ plant/CMakeFiles/plant.dir/src/task_list.c.o: /home/marrcinno/mim/pw/fabryka/ab1
   /usr/include/x86_64-linux-gnu/bits/time64.h \
   /usr/include/x86_64-linux-gnu/bits/timesize.h \
   /usr/include/x86_64-linux-gnu/bits/types.h \
+  /usr/include/x86_64-linux-gnu/bits/types/FILE.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__FILE.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/clock_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct___jmp_buf_tag.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h \
@@ -267,6 +289,7 @@ plant/CMakeFiles/plant.dir/src/task_list.c.o: /home/marrcinno/mim/pw/fabryka/ab1
   /usr/include/x86_64-linux-gnu/sys/cdefs.h \
   /usr/include/x86_64-linux-gnu/sys/select.h \
   /usr/include/x86_64-linux-gnu/sys/types.h \
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h
 
@@ -395,6 +418,8 @@ plant/CMakeFiles/plant.dir/src/worker_list.c.o: /home/marrcinno/mim/pw/fabryka/a
 
 /usr/include/strings.h:
 
+/usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h:
+
 /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h:
 
 /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h:
@@ -415,6 +440,8 @@ plant/CMakeFiles/plant.dir/src/worker_list.c.o: /home/marrcinno/mim/pw/fabryka/a
 
 /usr/include/x86_64-linux-gnu/bits/waitstatus.h:
 
+/usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h:
+
 /usr/include/x86_64-linux-gnu/bits/waitflags.h:
 
 /usr/include/x86_64-linux-gnu/bits/uintn-identity.h:
@@ -427,29 +454,25 @@ plant/CMakeFiles/plant.dir/src/worker_list.c.o: /home/marrcinno/mim/pw/fabryka/a
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h:
 
+/usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/struct___jmp_buf_tag.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/clockid_t.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
+
 /usr/include/x86_64-linux-gnu/bits/floatn.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h:
 
 /usr/include/x86_64-linux-gnu/bits/sched.h:
 
-/usr/include/string.h:
-
-/usr/include/x86_64-linux-gnu/bits/endian.h:
-
-/usr/include/x86_64-linux-gnu/bits/endianness.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/timer_t.h:
-
-/usr/include/endian.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h:
-
 /usr/lib/gcc/x86_64-linux-gnu/13/include/stdnoreturn.h:
 
 /usr/include/time.h:
-
-/usr/include/x86_64-linux-gnu/bits/stdio_lim.h:
 
 /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h:
 
@@ -459,31 +482,11 @@ plant/CMakeFiles/plant.dir/src/worker_list.c.o: /home/marrcinno/mim/pw/fabryka/a
 
 /usr/include/stdlib.h:
 
-/home/marrcinno/mim/pw/fabryka/ab12345/plant/headers/worker_list.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/locale_t.h:
-
 /usr/include/pthread.h:
 
-/home/marrcinno/mim/pw/fabryka/ab12345/plant/src/factory.c:
+/usr/include/errno.h:
 
-/usr/include/x86_64-linux-gnu/bits/libc-header-start.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h:
-
-/home/marrcinno/mim/pw/fabryka/ab12345/common/err.h:
-
-/usr/include/x86_64-linux-gnu/bits/floatn-common.h:
-
-/usr/include/x86_64-linux-gnu/bits/cpu-set.h:
-
-/home/marrcinno/mim/pw/fabryka/ab12345/plant/headers/task_list.h:
-
-/usr/include/x86_64-linux-gnu/bits/setjmp.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h:
-
-/home/marrcinno/mim/pw/fabryka/ab12345/common/plant.h:
+/usr/include/x86_64-linux-gnu/bits/posix2_lim.h:
 
 /usr/include/features.h:
 
@@ -491,11 +494,47 @@ plant/CMakeFiles/plant.dir/src/worker_list.c.o: /home/marrcinno/mim/pw/fabryka/a
 
 /usr/include/x86_64-linux-gnu/bits/types/FILE.h:
 
-/usr/include/features-time64.h:
+/usr/include/x86_64-linux-gnu/bits/setjmp.h:
 
-/usr/include/x86_64-linux-gnu/bits/pthread_stack_min-dynamic.h:
+/usr/include/x86_64-linux-gnu/bits/stdio_lim.h:
+
+/usr/include/x86_64-linux-gnu/asm/errno.h:
+
+/usr/include/string.h:
+
+/usr/include/x86_64-linux-gnu/bits/endian.h:
+
+/home/marrcinno/mim/pw/fabryka/ab12345/common/err.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/__locale_t.h:
+
+/usr/include/stdio.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/locale_t.h:
+
+/home/marrcinno/mim/pw/fabryka/ab12345/plant/headers/worker_list.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/timer_t.h:
+
+/usr/include/endian.h:
+
+/usr/include/x86_64-linux-gnu/bits/endianness.h:
+
+/home/marrcinno/mim/pw/fabryka/ab12345/common/plant.h:
+
+/usr/include/linux/errno.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdint-intn.h:
 
 /home/marrcinno/mim/pw/fabryka/ab12345/plant/headers/factory.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h:
+
+/usr/include/x86_64-linux-gnu/bits/errno.h:
+
+/usr/include/asm-generic/errno.h:
+
+/usr/include/asm-generic/errno-base.h:
 
 /home/marrcinno/mim/pw/fabryka/ab12345/plant/solution.c:
 
@@ -503,27 +542,39 @@ plant/CMakeFiles/plant.dir/src/worker_list.c.o: /home/marrcinno/mim/pw/fabryka/a
 
 /usr/include/sched.h:
 
-/usr/include/x86_64-linux-gnu/bits/long-double.h:
+/usr/include/x86_64-linux-gnu/bits/cpu-set.h:
 
-/usr/include/x86_64-linux-gnu/bits/byteswap.h:
+/home/marrcinno/mim/pw/fabryka/ab12345/plant/headers/task_list.h:
 
-/usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h:
+/usr/include/x86_64-linux-gnu/bits/floatn-common.h:
 
 /usr/include/assert.h:
-
-/usr/include/stdio.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/__locale_t.h:
 
 /home/marrcinno/mim/pw/fabryka/ab12345/plant/headers/worker_info.h:
 
 /usr/include/alloca.h:
 
+/usr/include/x86_64-linux-gnu/bits/local_lim.h:
+
 /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h:
 
 /usr/include/x86_64-linux-gnu/bits/time64.h:
 
-/usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
+/home/marrcinno/mim/pw/fabryka/ab12345/plant/src/factory.c:
+
+/usr/include/x86_64-linux-gnu/bits/libc-header-start.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h:
+
+/usr/include/x86_64-linux-gnu/bits/byteswap.h:
+
+/usr/include/x86_64-linux-gnu/bits/long-double.h:
+
+/usr/include/x86_64-linux-gnu/bits/posix1_lim.h:
+
+/usr/include/features-time64.h:
+
+/usr/include/x86_64-linux-gnu/bits/pthread_stack_min-dynamic.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h:
 
@@ -533,17 +584,13 @@ plant/CMakeFiles/plant.dir/src/worker_list.c.o: /home/marrcinno/mim/pw/fabryka/a
 
 /usr/include/x86_64-linux-gnu/bits/select.h:
 
-/usr/include/x86_64-linux-gnu/bits/types/clockid_t.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/struct___jmp_buf_tag.h:
-
 /usr/include/x86_64-linux-gnu/bits/types/time_t.h:
 
 /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h:
 
-/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:
+/usr/include/limits.h:
 
-/usr/include/x86_64-linux-gnu/bits/stdint-intn.h:
+/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:
 
 /usr/include/stdc-predef.h:
 
@@ -562,5 +609,7 @@ plant/CMakeFiles/plant.dir/src/worker_list.c.o: /home/marrcinno/mim/pw/fabryka/a
 /usr/include/x86_64-linux-gnu/bits/timesize.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/clock_t.h:
+
+/usr/include/linux/limits.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/__FILE.h:

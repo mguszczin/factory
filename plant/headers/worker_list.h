@@ -1,7 +1,6 @@
 #ifndef WORKER_LIST_H
 #define WORKER_LIST_H
 
-#include <stdlib.h>
 #include "worker_info.h"
 
 typedef struct {

@@ -1,4 +1,5 @@
 #include "../headers/worker_list.h"
+#include <stdlib.h>
 
 int worker_cont_init(worker_container* list, size_t n_workers)
 {
@@ -7,8 +8,10 @@ int worker_cont_init(worker_container* list, size_t n_workers)
     list->finished_workers = 0;
 
     list->items = malloc(list->capacity * sizeof(worker_info_t*));
-    if (list->items == NULL)
+    if (list->items == NULL) {
+        list->capacity = 0;
         return -1;
+    }
     return 0;
 }
 

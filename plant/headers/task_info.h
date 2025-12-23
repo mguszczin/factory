@@ -9,7 +9,10 @@ typedef struct {
     task_t* original_def;
     
     pthread_cond_t task_complete_cond;
+
     int workers_assigned;
+    int assigned_position;
+    
     bool is_completed;
     bool failed;
 } task_info_t;

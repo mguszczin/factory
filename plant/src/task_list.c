@@ -1,11 +1,13 @@
 #include "../headers/task_list.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include "../headers/task_list.h"
 
 int task_cont_init(task_container* cont)
 {
     cont->capacity = 4;
     cont->count = 0;
+    cont->waiting_ans = 0;
 
     cont->items = malloc(cont->capacity * sizeof(task_info_t*));
 
@@ -25,7 +27,6 @@ int task_cont_push_back(task_container* cont, task_info_t* task)
             return 0;
         }
     }
-
     if (cont->count >= cont->capacity) {
         int new_capacity = cont->capacity * 2;
         task_info_t** new_items = realloc(cont->items, new_capacity * sizeof(task_info_t*));
@@ -66,4 +67,5 @@ void task_cont_destroy(task_container* cont)
     cont->items = NULL;
     cont->count = 0;
     cont->capacity = 0;
+    cont->waiting_ans = 0;
 }
