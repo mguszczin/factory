@@ -1,18 +1,37 @@
 #include "../common/plant.h"
-#include "../common/err.h"
 #include "headers/factory.h"
+
 #include <stdio.h>
 #include <assert.h>
 #include <time.h>
 #include <limits.h>
 #include <errno.h>
-#undef errno
+#include <stdarg.h>
+#include <string.h>
 
 static factory_t factory;
 static pthread_mutex_t main_lock = PTHREAD_MUTEX_INITIALIZER;
-static int manager_signal = 0;
-static int other_signal = 0;
 static bool manager_should_sleep = false;
+
+void syserr(const char *fmt, ...) {
+    va_list fmt_args;
+
+    va_start(fmt_args, fmt);
+    vfprintf(stderr, fmt, fmt_args);
+    va_end(fmt_args);
+
+    fprintf(stderr, "%d (%s)\n", errno, strerror(errno));
+    exit(1);
+}
+
+#define ASSERT_ZERO(expr)                                                   \
+    do {                                                                    \
+        int _rc = (expr);                                                   \
+        if (_rc != 0)                                                       \
+            syserr(                                                         \
+                "Failed: %s\n\tIn function %s() in %s line %d.\n\tError: ", \
+                #expr, __func__, __FILE__, __LINE__);                       \
+    } while (0)
 
 
 void notify_manager()
@@ -21,73 +40,25 @@ void notify_manager()
     ASSERT_ZERO(pthread_cond_signal(&factory.manager_cond));
 }
 
-static bool worker_cond(worker_info_t* info)
+/* Function isn't thread safe, can only be done inside lock */
+bool factory_closed()
 {
-    bool still_in_work = time(NULL) < info->original_def->end;
-    bool needed_at_work = 
-            (factory.is_terminated && factory.tasks.waiting_ans > 0) ||
-            !factory.is_terminated;
-
-    return still_in_work && needed_at_work;
-}
-
-static void* worker_thread_func(void* arg)
-{
-    worker_info_t* info = (worker_info_t*)arg;
-    ASSERT_ZERO(pthread_mutex_lock(&main_lock));
-
-    notify_manager();
-
-    struct timespec ts;
-    ts.tv_sec = info->original_def->end + 1;
-    ts.tv_nsec = 0;
-
-    while (worker_cond(info)) {
-        int ret;
-        while (info->assigned_task == NULL && worker_cond(info)) {
-            ret = pthread_cond_timedwait(&info->wakeup_cond, &main_lock, &ts);
-            if (ret != 0 && ret != ETIMEDOUT) syserr("Someting went wrong inside worker_tread_cond");
-        }
-
-        if (info->assigned_task == NULL) {
-            break;
-        }
-
-        task_info_t* task = info->assigned_task;
-        int my_idx = info->assigned_index;
-        ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
-
-        int res = info->original_def->work(info->original_def, task->original_def, my_idx);
-
-        ASSERT_ZERO(pthread_mutex_lock(&main_lock));
-        
-        task->original_def->results[my_idx] = res;
-        task->workers_assigned--;
-        factory.station_usage[task->assigned_position]--;
-
-        if (task->workers_assigned == 0) {
-            task->is_completed = true;
-            ASSERT_ZERO(pthread_cond_broadcast(&task->task_complete_cond));
-        }
-
-        info->assigned_task = NULL;
-        info->assigned_index = -1;
-        notify_manager();
-    }
-
-    /* if we leave we want to signal to the manager that we left and we might be able to terminate, because not enought workers*/
-    notify_manager();
-
-    ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
-    return NULL;
+    return !factory.is_active || factory.is_terminated;
 }
 
 /* Marks the task as failed and tells the listenting thread about it if there is one.*/
-static void fail_task(task_info_t* task)
+static void task_completed(task_info_t* task, bool is_failed)
 {
+    if (task->is_completed) return;
+
     task->is_completed = true;
-    task->failed = true;
+    task->failed = is_failed;
+    factory.tasks.waiting_ans--;
     ASSERT_ZERO(pthread_cond_broadcast(&task->task_complete_cond));
+
+    if (factory.is_terminated && factory.tasks.waiting_ans == 0) 
+        notify_manager();
+
 }
 
 /* Find the smallest free station that is big enough*/
@@ -112,7 +83,7 @@ static int get_station_index(task_info_t* task)
     }
 
     if (!is_size_present)
-        fail_task(task);
+        task_completed(task, true);
 
     return best_index;
 }
@@ -148,9 +119,75 @@ static bool free_workers_present(task_info_t* task, const time_t now)
                                 factory.workers.count : 
                                 factory.workers.capacity;
     if ((potential_worker_size - bad_workers) < workers_needed)
-        fail_task(task);
+        task_completed(task, true);
     
     return false;
+}
+
+
+static bool worker_cond(worker_info_t* info)
+{
+    bool still_in_work = time(NULL) < info->original_def->end;
+    bool needed_at_work = 
+            (factory.is_terminated && factory.tasks.waiting_ans > 0) ||
+            !factory.is_terminated;
+
+    return still_in_work && needed_at_work;
+}
+
+static void* worker_thread_func(void* arg)
+{
+    worker_info_t* info = (worker_info_t*)arg;
+    ASSERT_ZERO(pthread_mutex_lock(&main_lock));
+
+    notify_manager();
+
+    struct timespec ts;
+    ts.tv_sec = info->original_def->end;
+    ts.tv_nsec = 10000000;
+    while (worker_cond(info)) {
+        int ret;
+        while (info->assigned_task == NULL && worker_cond(info)) {
+            ret = pthread_cond_timedwait(&info->wakeup_cond, &main_lock, &ts);
+            if (ret != 0 && ret != ETIMEDOUT) 
+                syserr("Someting went wrong inside worker_tread_cond");
+        }
+
+        if (info->assigned_task == NULL) {
+            break;
+        }
+
+        task_info_t* task = info->assigned_task;
+        int my_idx = info->assigned_index;
+        ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
+
+        int res = info->original_def->work(info->original_def, task->original_def, my_idx);
+        task->original_def->results[my_idx] = res;
+
+        ASSERT_ZERO(pthread_mutex_lock(&main_lock));
+        
+        task->workers_assigned--;
+        factory.station_usage[task->assigned_position]--;
+
+        if (task->workers_assigned == 0) {
+            task_completed(task, false);
+        }
+
+        info->assigned_task = NULL;
+        info->assigned_index = -1;
+        notify_manager();
+    }
+
+    time_t now = time(NULL);
+    for (int i = 0; i < factory.tasks.count; i++) {
+        task_info_t* task = factory.tasks.items[i];
+        if (task->workers_assigned > 0 || task->is_completed) continue;
+        // update the answer for workers
+        free_workers_present(task, now);
+    }
+
+    ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
+    return NULL;
 }
 
 static void assign_workers(const int best_ind, task_info_t* task, const time_t now)
@@ -186,12 +223,7 @@ static void* manager_thread_func(void* arg)
         time_t now;
         time_t next_wakeup = 0;
         time_t starting_time = time(NULL);
-        if (manager_should_sleep == true) manager_signal++;
-        else other_signal++;
 
-        //printf("MANAGER SIGNAL: %d\n", manager_signal);
-        //printf("FACTORY SIGNAL: %d\n", other_signal);
-        //printf("up : %d | down :  %d \n", up, down);
         for (size_t i = 0; i < factory.tasks.count; i++) {
             task_info_t* task = factory.tasks.items[i];
             /* `now` update is expensive but we want to maximize the 
@@ -209,7 +241,7 @@ static void* manager_thread_func(void* arg)
             }
 
             int best_ind;
-            if (free_workers_present(task, now) && 
+            if (free_workers_present(task, now) && !task->is_completed &&
                (best_ind = get_station_index(task)) != -1 && 
                 task->original_def->start <= now) {
                 assign_workers(best_ind, task, now);
@@ -225,14 +257,18 @@ static void* manager_thread_func(void* arg)
                 }
             }
         }
+
+        if (factory.is_terminated && factory.tasks.waiting_ans == 0) {
+            break;
+        }
+
         int res = 0;
         manager_should_sleep = true;
         if (next_wakeup > 0 && next_wakeup > starting_time) {
-            //printf("next_wakup: %ld | starting time: %ld\n", next_wakeup, starting_time);
             struct timespec ts;
             // for some reason this avoids a lot of spinning
-            ts.tv_sec = next_wakeup + 1;
-            ts.tv_nsec = 0;
+            ts.tv_sec = next_wakeup;
+            ts.tv_nsec = 10000000;
             while((res == 0 && manager_should_sleep == true)) {
                 res = pthread_cond_timedwait(&factory.manager_cond, &main_lock, &ts);
                 if (res != 0 && res != ETIMEDOUT) syserr("pthread condition unexpected finish");
@@ -291,7 +327,7 @@ int destroy_plant()
 {
     ASSERT_ZERO(pthread_mutex_lock(&main_lock));
 
-    if (factory.is_active == false || factory.is_terminated == true) {
+    if (factory_closed()) {
         ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
         return ERROR;
     }
@@ -302,6 +338,7 @@ int destroy_plant()
     ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
 
     ASSERT_ZERO(pthread_join(factory.manager_thread, NULL));
+
     /* After manager left we signall all remaining 
        workers so they can leave */
     ASSERT_ZERO(pthread_mutex_lock(&main_lock));
@@ -344,7 +381,7 @@ int add_worker(worker_t* w)
 
     ASSERT_ZERO(pthread_mutex_lock(&main_lock));
 
-    if (factory.is_terminated || !factory.is_active) {
+    if (factory_closed()) {
         ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
         worker_info_destroy(wrapper);
         free(wrapper);
@@ -384,8 +421,7 @@ int add_task(task_t* t)
 
     ASSERT_ZERO(pthread_mutex_lock(&main_lock));
 
-    bool is_not_ready = factory.is_terminated || !factory.is_active;
-    if (is_not_ready) {
+    if (factory_closed()) {
         ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
         task_info_destroy(wrapper);
         free(wrapper);
@@ -406,8 +442,10 @@ int add_task(task_t* t)
     /* If we really added a new element tell manager about the update. */
     if (prev_size != cur_size) {
         /* This way we check if the task can fail*/
+        factory.tasks.waiting_ans++;
         get_station_index(wrapper);
-        free_workers_present(wrapper, wrapper->original_def->start);
+        if (!wrapper->is_completed)
+            free_workers_present(wrapper, wrapper->original_def->start);
         /* If we didn't fail we can notify manager about new task*/
         if (!wrapper->failed)notify_manager();
     }
@@ -442,8 +480,8 @@ int collect_task(task_t* t)
 
     ASSERT_ZERO(pthread_mutex_lock(&main_lock));
 
-    if (factory.is_terminated || !factory.is_active || 
-                            !can_be_collected(t, &wrapper)) {
+    if (factory_closed() || 
+        !can_be_collected(t, &wrapper)) {
         ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
         return ERROR;
     }
@@ -456,9 +494,9 @@ int collect_task(task_t* t)
     /* We need to read here because destroy may be called. */
     bool bad = wrapper->failed;
 
-    if (factory.tasks.waiting_ans == 0 && factory.is_terminated) {
+    if (factory.is_terminated && factory.tasks.waiting_ans == 0)
         notify_manager();
-    }
+
     ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
 
     if (bad) return ERROR;

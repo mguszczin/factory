@@ -3,7 +3,6 @@
 
 plant/CMakeFiles/plant.dir/solution.c.o
  /home/marrcinno/mim/pw/fabryka/ab12345/plant/solution.c
- /home/marrcinno/mim/pw/fabryka/ab12345/common/err.h
  /home/marrcinno/mim/pw/fabryka/ab12345/common/plant.h
  /home/marrcinno/mim/pw/fabryka/ab12345/plant/headers/factory.h
  /home/marrcinno/mim/pw/fabryka/ab12345/plant/headers/task_info.h
@@ -26,6 +25,8 @@ plant/CMakeFiles/plant.dir/solution.c.o
  /usr/include/stdc-predef.h
  /usr/include/stdio.h
  /usr/include/stdlib.h
+ /usr/include/string.h
+ /usr/include/strings.h
  /usr/include/time.h
  /usr/include/x86_64-linux-gnu/asm/errno.h
  /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h
@@ -94,7 +95,6 @@ plant/CMakeFiles/plant.dir/solution.c.o
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdatomic.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h
- /usr/lib/gcc/x86_64-linux-gnu/13/include/stdnoreturn.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h
 
 plant/CMakeFiles/plant.dir/src/factory.c.o

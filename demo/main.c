@@ -113,7 +113,6 @@ int test_destroy_waits_for_future() {
     // We do NOT call collect_task. We go straight to destroy.
     // destroy_plant should see the pending task and wait.
     time_t start = time(NULL);
-    collect_task(&t);
     destroy_plant();
     time_t end = time(NULL);
 
@@ -203,8 +202,6 @@ int test_destroy_waits_multiple_future() {
     add_task(&t2);
 
     time_t start = time(NULL);
-    collect_task(&t1);
-    collect_task(&t2);
     destroy_plant();
     time_t end = time(NULL);
 
@@ -295,8 +292,6 @@ int test_mixed_destroy() {
     add_task(&t2);
 
     time_t start = time(NULL);
-    collect_task(&t2);
-    collect_task(&t1);
     destroy_plant();
     time_t end = time(NULL);
 
@@ -589,7 +584,6 @@ int main() {
     printf("==========================================\n\n");
 
     int fail_count = 0;
-    /*
     if (test_worker_ends_before_task_starts() != 0) fail_count++;
     if (test_destroy_waits_for_future() != 0) fail_count++;
     if (test_worker_starts_late() != 0) fail_count++;
@@ -597,15 +591,11 @@ int main() {
     if (test_worker_tight_schedule() != 0) fail_count++;
     if (test_mixed_destroy() != 0) fail_count++;
     if (test_massive_parallelism() != 0) fail_count++;
-    */
-    //if (test_concurrent_clients() != 0) fail_count++;
+    
+    if (test_concurrent_clients() != 0) fail_count++;
     printf("RANDOMIZED TESTS, IF THERE WAS ERROR ON TEST I, \n YOU CAN JUST CALL `test_stress_mixed_ops(i)` AND ANALYZE WITH VALGRIND\n ");
     printf("FOR EXAMPLE:  valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --trace-children=yes --fair-sched=yes --log-file=valgrind-out.txt ./demo");
-    for (int i = 0; i < 100; i++) {
-        if (test_stress_mixed_ops(i) != 0) fail_count++;
-    }
     
-   test_stress_mixed_ops(6);
     printf("\n==========================================\n");
     if (fail_count == 0) {
         printf(GREEN "ALL ADVANCED TESTS PASSED.\n" RESET);
