@@ -34,6 +34,13 @@ void syserr(const char *fmt, ...) {
     } while (0)
 
 
+#define CLEANUP_AND_RETURN(expr)                                            \
+    do {                                                                    \    
+        int _rc = (expr);                                                   \            
+        if (_rc != 0)                                                       \
+            goto cleanup;                                                   \
+    } while (0)                                                             \
+
 void notify_manager()
 {
     manager_should_sleep = false;
@@ -288,37 +295,45 @@ static void* manager_thread_func(void* arg)
    Does memory allocation before entering mutex for efficiency */
 int init_plant(int* stations, int n_stations, int n_workers)
 {
+    int level = 0;
     factory_t f = {0};
-    if (factory_init(&f, n_stations, stations, n_workers) != 0)
-        return ERROR;
-    
+
+    CLEANUP_AND_RETURN(factory_init(&f, n_stations, stations, n_workers));
+    level++;
+
     /* Now we enter mutex end check if we can still initialize factory */
     ASSERT_ZERO(pthread_mutex_lock(&main_lock));
 
-    if (factory.is_active == true) {
-        ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
-        factory_destroy(&f);
-        return ERROR;
-    }
+    CLEANUP_AND_RETURN(factory.is_active);
+    level++;
 
     factory = f;
 
     /* We need to remember to destroy the condition when leaving mutex. */
-    if (pthread_cond_init(&factory.manager_cond, NULL) != 0) {
-        factory_destroy(&factory);
-        ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
-        return ERROR;
-    }
+    CLEANUP_AND_RETURN(pthread_cond_init(&factory.manager_cond, NULL));
+    level++;
 
-    if (pthread_create(&factory.manager_thread, NULL, manager_thread_func, NULL) != 0) {
-        pthread_cond_destroy(&factory.manager_cond);
-        factory_destroy(&factory);
-        ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
-        return ERROR;
-    }
+    CLEANUP_AND_RETURN(pthread_create(&factory.manager_thread, NULL, manager_thread_func, NULL));
 
     ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
     return PLANTOK;
+
+    cleanup:
+        switch (level)
+        {
+            case 3:
+                ASSERT_ZERO(pthread_cond_destroy(&factory.manager_cond));
+            case 2:
+                factory_destroy(&factory);
+                ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
+                break;
+            case 1:
+                ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
+                factory_destroy(&f);
+            default:
+                break;
+        }
+    return ERROR;
 }
 
 /* We terminate the whole plantation and wait for it to handle all tasks,
@@ -397,6 +412,7 @@ int add_worker(worker_t* w)
         worker_info_destroy(wrapper);
         free(wrapper);
         factory.workers.count--;
+        ASSERT_ZERO(pthread_mutex_unlock(&main_lock));
         return ERROR;
     }
 
