@@ -1,2 +1,0 @@
-/usr/bin/ar qc libplant.a CMakeFiles/plant.dir/solution.c.o CMakeFiles/plant.dir/src/factory.c.o CMakeFiles/plant.dir/src/task_info.c.o CMakeFiles/plant.dir/src/task_list.c.o CMakeFiles/plant.dir/src/worker_info.c.o CMakeFiles/plant.dir/src/worker_list.c.o
-/usr/bin/ranlib libplant.a
